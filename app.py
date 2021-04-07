@@ -7,7 +7,8 @@ app.config["SECRET_KEY"] = "oh-so-secret"
 
 debug = DebugToolbarExtension(app)
 
-responses = []
+# session["responses"] = []
+RESPONSES_KEY = "responses"
 
 
 @app.route("/")
@@ -19,6 +20,7 @@ def get_title_page():
 @app.route("/start", methods=["GET", "POST"])
 def start_survey():
     """redirect user to first question"""
+    session[RESPONSES_KEY] = []
     return redirect("/question/0")
 
 
@@ -26,6 +28,8 @@ def start_survey():
 def show_questions(quest_id):
     """get questions based on order and  display
     if statements prevent user from going to page they are not supposed to be on"""
+    responses = session[RESPONSES_KEY]
+
     if responses is None:
         return redirect("/")
     if len(responses) == len(survey.questions):
@@ -41,10 +45,14 @@ def show_questions(quest_id):
 
 @app.route("/answer", methods=["POST"])
 def handle_ans():
-    """get user answer that was submitted, add it to the response list, and redirect
-    to next question. If survey is completed, redirect user to thank you page"""
+    """get user answer that was submitted, add it to session, and redirect
+    to next question.If survey is completed, redirect user to thank you page"""
+
     user_answer = request.form["answer"]
+    responses = session[RESPONSES_KEY]
     responses.append(user_answer)
+    session[RESPONSES_KEY] = responses
+
     if len(responses) != len(survey.questions):
         return redirect(f"/question/{len(responses)}")
     else:
